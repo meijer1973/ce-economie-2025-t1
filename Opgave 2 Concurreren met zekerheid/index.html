@@ -30,13 +30,23 @@
     .nav-back:hover { color: var(--domain); }
     footer { text-align: center; color: var(--gray); font-size: 13px; padding: 30px 0 20px; }
     @media(max-width: 600px) { .hero { padding: 24px; } .hero h1 { font-size: 24px; } .card-grid { grid-template-columns: 1fr; } }
+    /* Office Online Viewer overlay */
+    .viewer-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+    .viewer-overlay.active { display: flex; }
+    .viewer-panel { background: white; border-radius: 12px; width: 95vw; height: 90vh; max-width: 1200px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .viewer-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--navy); color: white; flex-shrink: 0; }
+    .viewer-toolbar .title { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .viewer-toolbar .btns { display: flex; gap: 8px; }
+    .viewer-toolbar button { background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-family: inherit; }
+    .viewer-toolbar button:hover { background: rgba(255,255,255,0.25); }
+    .viewer-iframe { flex: 1; border: none; width: 100%; }
   </style></head><body>
 <div class="page">
   <a class="nav-back" href="../index.html">← Terug naar overzicht</a>
   <div class="hero" style="border-top-color: #1E8449">
     <span class="badge">Opgave 2</span>
     <h1>Concurreren met zekerheid</h1>
-    <p class="sub">CE Economie 2025 Tijdvak 1 — 12 bestanden</p>
+    <p class="sub">CE Economie 2025 Tijdvak 1 — 13 bestanden</p>
   </div>
   <div class="section">
       <div class="section-header"><span class="step-num">1</span><h2>Voorbereiden</h2></div>
@@ -121,4 +131,52 @@
       </a></div>
     </div>
   <footer>CE Economie 2025 Tijdvak 1 — Opgave 2: Concurreren met zekerheid</footer>
-</div></body></html>
+</div>
+
+<div class="viewer-overlay" id="viewer-overlay">
+  <div class="viewer-panel">
+    <div class="viewer-toolbar">
+      <span class="title" id="viewer-title">Document</span>
+      <div class="btns">
+        <button onclick="window.open(document.getElementById('viewer-frame').dataset.download)">Download</button>
+        <button onclick="closeViewer()">Sluiten ✕</button>
+      </div>
+    </div>
+    <iframe class="viewer-iframe" id="viewer-frame"></iframe>
+  </div>
+</div>
+<script>
+const PAGES_BASE = "https://meijer1973.github.io/ce-economie-2025-t1";
+const OPGAVE_FOLDER = "Opgave%202%20Concurreren%20met%20zekerheid";
+
+document.addEventListener('click', function(e) {
+  const link = e.target.closest('a.card');
+  if (!link) return;
+  const href = link.getAttribute('href');
+  if (!href) return;
+  const isOffice = /\.(docx|pptx)$/i.test(href);
+  if (!isOffice) return;
+  e.preventDefault();
+  const absUrl = PAGES_BASE + "/" + OPGAVE_FOLDER + "/" + href.split('/').map(encodeURIComponent).join('/');
+  const viewerUrl = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(absUrl);
+  document.getElementById('viewer-title').textContent = decodeURIComponent(href.split('/').pop());
+  const frame = document.getElementById('viewer-frame');
+  frame.src = viewerUrl;
+  frame.dataset.download = absUrl;
+  document.getElementById('viewer-overlay').classList.add('active');
+});
+
+function closeViewer() {
+  document.getElementById('viewer-overlay').classList.remove('active');
+  document.getElementById('viewer-frame').src = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeViewer();
+});
+
+document.getElementById('viewer-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeViewer();
+});
+</script>
+</body></html>
