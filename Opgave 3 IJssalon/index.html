@@ -146,9 +146,6 @@
   </div>
 </div>
 <script>
-const PAGES_BASE = "https://meijer1973.github.io/ce-economie-2025-t1";
-const OPGAVE_FOLDER = "Opgave%203%20IJssalon";
-
 document.addEventListener('click', function(e) {
   const link = e.target.closest('a.card');
   if (!link) return;
@@ -157,9 +154,9 @@ document.addEventListener('click', function(e) {
   const isOffice = /\.(docx|pptx)$/i.test(href);
   if (!isOffice) return;
   e.preventDefault();
-  const absUrl = PAGES_BASE + "/" + OPGAVE_FOLDER + "/" + href.split('/').map(encodeURIComponent).join('/');
+  const absUrl = new URL(href, window.location.href).href;
   const viewerUrl = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(absUrl);
-  document.getElementById('viewer-title').textContent = decodeURIComponent(href.split('/').pop());
+  document.getElementById('viewer-title').textContent = decodeURIComponent(href.split('/').pop()).replace(/\.[^.]+$/, '');
   const frame = document.getElementById('viewer-frame');
   frame.src = viewerUrl;
   frame.dataset.download = absUrl;
