@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groenten - Instapquiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #e2e8f0; font-family: 'Lato', sans-serif; color: #334155; display: flex; justify-content: center; align-items: stretch; min-height: 100vh; padding: 10px; }
+        h1, h2, h3 { font-family: 'Poppins', sans-serif; color: #0f172a; }
+        .app-container { background-color: #ffffff; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 1360px; overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 20px); min-height: 0; }
+        .header { background-color: #2563eb; color: white; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; z-index: 10; flex-shrink: 0; }
+        .header h1 { color: white; font-size: 22px; margin: 0; }
+        .stats-bar { display: flex; gap: 16px; font-size: 14px; font-weight: bold; }
+        .content-layout { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
+        @media(min-width: 850px) { .content-layout { flex-direction: row; } .main-area { flex: 1.8; border-right: 1px solid #cbd5e1; } .sidebar-area { flex: 1; background-color: #f8fafc; } }
+        .main-area { display: flex; flex-direction: column; min-height: 0; }
+        .screen { display: none; padding: 24px 28px; flex-grow: 1; flex-direction: column; min-height: 0; }
+        .screen.active { display: flex; animation: fadeIn 0.4s ease; }
+        .sidebar-area { display: none; padding: 22px 20px; flex-direction: column; min-height: 0; overflow: auto; }
+        .sidebar-title { font-size: 18px; margin-bottom: 25px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        #start-screen { text-align: center; justify-content: center; align-items: center; }
+        #start-screen h2 { font-size: 32px; margin-bottom: 14px; }
+        #start-screen p { font-size: 17px; margin-bottom: 22px; max-width: 760px; line-height: 1.5; color: #475569; }
+        .category-badge { display: inline-block; background-color: #e0e7ff; color: #3730a3; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+        .question-text { font-size: 20px; font-weight: 600; margin-bottom: 18px; line-height: 1.35; }
+        .options-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .option-btn { background-color: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; font-size: 15px; font-family: 'Lato', sans-serif; color: #334155; text-align: left; cursor: pointer; transition: all 0.2s; display: flex; align-items: flex-start; line-height: 1.3; min-height: 72px; }
+        .option-btn:hover { border-color: #cbd5e1; background-color: #f1f5f9; transform: translateY(-1px); }
+        .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; }
+        .option-btn.wrong { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        .option-btn:disabled { cursor: default; transform: none; }
+        .feedback-box { display: none; padding: 16px; border-radius: 12px; margin-bottom: 14px; }
+        .feedback-box.show { display: block; }
+        .feedback-box.success { background-color: #dcfce7; border-left: 5px solid #22c55e; color: #166534; }
+        .feedback-box.error { background-color: #fee2e2; border-left: 5px solid #ef4444; color: #991b1b; }
+        .feedback-title { font-weight: bold; margin-bottom: 6px; font-size: 17px; }
+        .btn { background-color: #2563eb; color: white; border: none; border-radius: 8px; padding: 12px 22px; font-size: 15px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; font-family: 'Poppins', sans-serif; align-self: flex-end; margin-top: auto; }
+        .btn:hover { background-color: #1d4ed8; }
+        .btn-large { padding: 16px 34px; font-size: 18px; align-self: center; }
+        .mastery-container { width: 100%; }
+        .mastery-item { margin-bottom: 16px; }
+        .mastery-label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-weight: bold; font-size: 13px; }
+        .mastery-bar-bg { background-color: #e2e8f0; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; }
+        .mastery-bar-fill { height: 100%; border-radius: 10px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.6s; }
+        @media(max-width: 980px) { .options-grid { grid-template-columns: 1fr; } }
+        @media(max-width: 849px) { body { padding: 0; } .app-container { height: 100vh; border-radius: 0; } .screen { padding: 20px; } .header { padding: 12px 16px; } .header h1 { font-size: 18px; } .stats-bar { font-size: 12px; gap: 10px; } .question-text { font-size: 18px; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <h1><i class="fa-solid fa-graduation-cap"></i> CE Economie 2025 – Opgave 6</h1>
+        <div class="stats-bar" id="game-stats" style="display: none;">
+            <div><i class="fa-solid fa-star"></i> Score: <span id="score-display">0</span></div>
+            <div><i class="fa-solid fa-list-ol"></i> Vraag: <span id="question-count">0/10</span></div>
+        </div>
+    </div>
+    <div class="content-layout">
+        <div class="main-area">
+            <div id="start-screen" class="screen active">
+                <h2>Groenten</h2>
+                <p>Test je kennis van verzonken kosten, pay-off matrices, Nash-evenwicht en externe effecten.</p>
+                <div style="text-align: left; background: #f8fafc; padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #e2e8f0;">
+                    <h3 style="margin-bottom: 15px; font-size: 18px;"><i class="fa-solid fa-bullseye" style="color:#2563eb;"></i> Wat we gaan toetsen:</h3>
+                    <ul style="list-style-position: inside; color: #475569; line-height: 1.8;"><li>Kostensoorten</li>
+<li>Speltheorie</li>
+<li>Externe effecten</li></ul>
+                </div>
+                <button class="btn btn-large" onclick="startGame()">Start de Training</button>
+            </div>
+            <div id="game-screen" class="screen">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="category-display" class="category-badge">Categorie</div>
+                    <div id="difficulty-stars" style="color: #fbbf24; margin-bottom: 20px; font-size: 18px;"></div>
+                </div>
+                <div id="question-text" class="question-text">Vraag...</div>
+                <div id="options-container" class="options-grid"></div>
+                <div id="feedback-container" class="feedback-box">
+                    <div id="feedback-title" class="feedback-title">Feedback</div>
+                    <div id="feedback-text">Uitleg...</div>
+                </div>
+                <button id="next-btn" class="btn" style="display: none;" onclick="nextQuestion()">Volgende Vraag <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            <div id="end-screen" class="screen">
+                <h2>Sessie Voltooid! <i class="fa-solid fa-trophy" style="color: #fbbf24;"></i></h2>
+                <p style="font-size: 18px; margin-top: 10px; margin-bottom: 30px;">In deze sessie heb je <span id="final-score" style="font-weight: bold; color: #2563eb;"></span> vragen goed beantwoord.</p>
+                <button class="btn btn-large" onclick="restartSession()">Start Volgende Sessie <i class="fa-solid fa-rotate-right"></i></button>
+            </div>
+        </div>
+        <div class="sidebar-area" id="sidebar">
+            <h3 class="sidebar-title"><i class="fa-solid fa-chart-pie"></i> Jouw Voortgang</h3>
+            <div id="mastery-dashboard" class="mastery-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    const questionBank = [{"category":"kosten","difficulty":1,"q":"Verzonken kosten zijn kosten die:","options":["Variabel zijn","Niet meer teruggevorderd kunnen worden","Altijd laag zijn","Door de overheid worden betaald"],"answer":1,"rationale":"Verzonken kosten = geen alternatieve aanwending mogelijk, niet terugvorderbaar."},{"category":"kosten","difficulty":1,"q":"Zijn de kosten voor grondaankoop bij biologische teelt verzonken?","options":["Ja, want grond is duur","Nee, want grond kan ook anders gebruikt worden","Ja, want je kunt grond niet verplaatsen","Nee, want de overheid subsidieert het"],"answer":1,"rationale":"Grond kan verkocht, verhuurd of voor andere teelt gebruikt worden → alternatieve aanwending → NIET verzonken."},{"category":"kosten","difficulty":2,"q":"TCK = TO – TVK – TW. Als TO = €138.150, TVK = €46.050, TW = €75.000, dan is TCK:","options":["€17.100","€14.250","€21.000","€15.000"],"answer":0,"rationale":"138.150 – 46.050 – 75.000 = €17.100."},{"category":"kosten","difficulty":2,"q":"De vaste kosten stijgen van €14.250 naar €17.100. De procentuele stijging is:","options":["15%","20%","25%","18%"],"answer":1,"rationale":"(17.100 – 14.250) / 14.250 × 100% = 2.850 / 14.250 × 100% = 20%."},{"category":"kosten","difficulty":3,"q":"Welk van deze kosten is een voorbeeld van verzonken kosten?","options":["Grondaankoop","Investering in een reclamecampagne","Aankoop van machines (doorverkoopbaar)","Huur van een kantoor"],"answer":1,"rationale":"Een reclamecampagne is eenmaal uitgegeven en niet terugvorderbaar. Grond, machines en huur hebben alternatief gebruik."},{"category":"speltheorie","difficulty":1,"q":"Een Nash-evenwicht is een situatie waarin:","options":["Beide spelers maximale winst hebben","Geen speler eenzijdig kan verbeteren","De overheid ingrijpt","Er maar één strategie is"],"answer":1,"rationale":"Nash-evenwicht = geen enkele speler kan zijn uitkomst verbeteren door eenzijdig van strategie te veranderen."},{"category":"speltheorie","difficulty":1,"q":"Een dominante strategie is:","options":["De strategie die de meeste winst oplevert","De strategie die altijd het beste is, ongeacht de ander","De strategie die de overheid oplegt","De strategie die het risico minimaliseert"],"answer":1,"rationale":"Dominant = altijd de beste keuze, ongeacht wat de andere speler doet."},{"category":"speltheorie","difficulty":2,"q":"In tabel 2 zijn de Nash-evenwichten bij winstmaximalisatie:","options":["Alleen trad;trad","Alleen bio;bio","Trad;trad én bio;bio","Er is geen Nash-evenwicht"],"answer":2,"rationale":"Bij beide cellen kan geen speler eenzijdig verbeteren → twee Nash-evenwichten."},{"category":"speltheorie","difficulty":2,"q":"Bij afzetmaximalisatie is de dominante strategie voor beide boeren:","options":["Biologisch","Traditioneel","Soms bio, soms trad","Er is geen dominante strategie"],"answer":1,"rationale":"Traditioneel: 65k > 46k (boer A) en 70k > 55k (boer B) → traditioneel is dominant voor beiden."},{"category":"speltheorie","difficulty":3,"q":"Het resultaat (bio;bio) met €92.900 voor beiden is:","options":["Nash én Pareto-optimaal","Nash maar niet Pareto-optimaal","Niet Nash","Het enige evenwicht"],"answer":0,"rationale":"Bio;bio is Nash (niemand kan verbeteren) én levert de hoogste gezamenlijke winst op."},{"category":"extern","difficulty":1,"q":"Een negatief extern effect is:","options":["Kosten voor de producent","Kosten voor derden die niet in de prijs zitten","Winst voor de concurrent","Overheidssubsidie"],"answer":1,"rationale":"Negatief extern effect = schade voor anderen die niet wordt doorberekend in de marktprijs."},{"category":"extern","difficulty":2,"q":"Traditionele groenteteelt veroorzaakt milieuschade. Dit is een:","options":["Positief extern effect","Negatief extern effect","Internalisering","Marktfalen door monopolie"],"answer":1,"rationale":"Milieuschade = kosten voor de maatschappij die niet in de prijs van de groenten zitten."},{"category":"extern","difficulty":2,"q":"Als beide boeren voor afzetmaximalisatie kiezen, dalen de negatieve externe effecten:","options":["Ja, want er wordt meer geproduceerd","Nee, want beide kiezen traditioneel","Ja, want biologisch is goedkoper","Dat hangt af van de prijs"],"answer":1,"rationale":"Afzetmax → dominante strategie = traditioneel → milieuschade blijft → externe effecten dalen NIET."},{"category":"extern","difficulty":3,"q":"De overheid kan externe effecten internaliseren door:","options":["Subsidie op biologische teelt","Heffing op traditionele teelt","Beide","Geen van beide"],"answer":2,"rationale":"Zowel subsidie (bio goedkoper) als heffing (trad duurder) kan de externe effecten in de prijs brengen."}];
+    let userProgress = {"kosten":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false},"speltheorie":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false},"extern":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false}};
+    const catNames = {"kosten":"Kostensoorten","speltheorie":"Speltheorie","extern":"Externe effecten"};
+    let currentQuestionIndex = 0, score = 0, currentQuestionData = null, askedQuestionsThisSession = [];
+    const maxQuestions = 10;
+
+    function renderMasteryDashboard() {
+        const dash = document.getElementById('mastery-dashboard'); dash.innerHTML = '';
+        for (const [cat, p] of Object.entries(userProgress)) {
+            let steps = p.closed ? 3 : Math.min(p.correctCount, 3);
+            let pct = Math.round((steps / 3) * 100);
+            let status = p.closed ? "Afgesloten <i class='fa-solid fa-check-circle'></i>" : 'Reeks: '+steps+'/3';
+            let barColor = pct === 100 ? '#10b981' : '#3b82f6';
+            let textColor = pct === 100 ? '#10b981' : '#64748b';
+            dash.innerHTML += '<div class="mastery-item"><div class="mastery-label"><span>'+catNames[cat]+'</span><span style="color:'+textColor+'">'+status+'</span></div><div class="mastery-bar-bg"><div class="mastery-bar-fill" style="width:'+pct+'%;background-color:'+barColor+'"></div></div></div>';
+        }
+    }
+    function startGame() {
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        document.getElementById('sidebar').style.display = 'flex';
+        document.getElementById('game-stats').style.display = 'flex';
+        renderMasteryDashboard(); nextQuestion();
+    }
+    function restartSession() {
+        if (Object.values(userProgress).every(p => p.closed)) {
+            alert("Geniaal! Alles afgesloten. Voortgang wordt gereset.");
+            for (let c in userProgress) userProgress[c] = {level:1,correctCount:0,passedLevel3:false,closed:false};
+        }
+        currentQuestionIndex = 0; score = 0; askedQuestionsThisSession = [];
+        document.getElementById('end-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        document.getElementById('score-display').innerText = "0";
+        document.getElementById('question-count').innerText = "0/10";
+        renderMasteryDashboard(); nextQuestion();
+    }
+    function getNextQuestion() {
+        let cats = Object.keys(userProgress).filter(c => !userProgress[c].closed);
+        if (!cats.length) return null;
+        cats.sort(() => Math.random() - 0.5);
+        for (let cat of cats) {
+            let p = userProgress[cat], diff = p.correctCount >= 2 ? 3 : p.level;
+            let pool = questionBank.filter(q => q.category === cat && q.difficulty === diff && !askedQuestionsThisSession.includes(q));
+            if (!pool.length) pool = questionBank.filter(q => q.category === cat && !askedQuestionsThisSession.includes(q));
+            if (pool.length) { const sel = pool[Math.floor(Math.random()*pool.length)]; askedQuestionsThisSession.push(sel); return sel; }
+        }
+        let fb = questionBank.filter(q => !askedQuestionsThisSession.includes(q));
+        if (fb.length) { const sel = fb[Math.floor(Math.random()*fb.length)]; askedQuestionsThisSession.push(sel); return sel; }
+        return null;
+    }
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex > maxQuestions) { endGame(); return; }
+        document.getElementById('question-count').innerText = currentQuestionIndex+'/'+maxQuestions;
+        document.getElementById('feedback-container').classList.remove('show','success','error');
+        document.getElementById('next-btn').style.display = 'none';
+        currentQuestionData = getNextQuestion();
+        if (!currentQuestionData) { endGame(); return; }
+        document.getElementById('category-display').innerText = catNames[currentQuestionData.category]+' - Niveau '+currentQuestionData.difficulty;
+        let stars = ''; for(let i=0;i<currentQuestionData.difficulty;i++) stars += '<i class="fa-solid fa-star"></i>';
+        document.getElementById('difficulty-stars').innerHTML = stars;
+        document.getElementById('question-text').innerHTML = currentQuestionData.q;
+        const oc = document.getElementById('options-container'); oc.innerHTML = '';
+        currentQuestionData.options.forEach((opt, idx) => {
+            const btn = document.createElement('button'); btn.className = 'option-btn';
+            btn.innerHTML = '<span>'+opt+'</span>'; btn.onclick = () => checkAnswer(idx, btn); oc.appendChild(btn);
+        });
+    }
+    function checkAnswer(idx, btn) {
+        document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+        const ok = idx === currentQuestionData.answer;
+        const fb = document.getElementById('feedback-container');
+        const cat = currentQuestionData.category, diff = currentQuestionData.difficulty;
+        if (ok) {
+            btn.classList.add('correct'); fb.className = 'feedback-box show success';
+            document.getElementById('feedback-title').innerHTML = '<i class="fa-solid fa-check-circle"></i> Correct!';
+            score++; document.getElementById('score-display').innerText = score;
+            userProgress[cat].correctCount++;
+            if (diff === 3) userProgress[cat].passedLevel3 = true;
+            if (userProgress[cat].correctCount >= 3 && userProgress[cat].passedLevel3) userProgress[cat].closed = true;
+            if (userProgress[cat].level < 3) userProgress[cat].level++;
+        } else {
+            btn.classList.add('wrong'); document.querySelectorAll('.option-btn')[currentQuestionData.answer].classList.add('correct');
+            fb.className = 'feedback-box show error';
+            document.getElementById('feedback-title').innerHTML = '<i class="fa-solid fa-times-circle"></i> Helaas onjuist.';
+            if (userProgress[cat].level > 1) userProgress[cat].level--;
+            userProgress[cat].correctCount = 0; userProgress[cat].passedLevel3 = false;
+        }
+        renderMasteryDashboard();
+        document.getElementById('feedback-text').innerHTML = currentQuestionData.rationale;
+        document.getElementById('next-btn').style.display = 'block';
+    }
+    function endGame() {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('end-screen').classList.add('active');
+        let played = Math.min(currentQuestionIndex - 1, maxQuestions);
+        document.getElementById('final-score').innerText = score+' van de '+played;
+        renderMasteryDashboard();
+    }
+    document.addEventListener('keydown', function(e) {
+        if (document.activeElement && (document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA')) return;
+        const nb = document.getElementById('next-btn');
+        if (nb && nb.style.display !== 'none' && (e.key==='Enter'||e.key===' ')) { e.preventDefault(); nextQuestion(); }
+    });
+</script>
+</body>
+</html>

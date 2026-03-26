@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IJssalon - Instapquiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #e2e8f0; font-family: 'Lato', sans-serif; color: #334155; display: flex; justify-content: center; align-items: stretch; min-height: 100vh; padding: 10px; }
+        h1, h2, h3 { font-family: 'Poppins', sans-serif; color: #0f172a; }
+        .app-container { background-color: #ffffff; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 1360px; overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 20px); min-height: 0; }
+        .header { background-color: #2563eb; color: white; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; z-index: 10; flex-shrink: 0; }
+        .header h1 { color: white; font-size: 22px; margin: 0; }
+        .stats-bar { display: flex; gap: 16px; font-size: 14px; font-weight: bold; }
+        .content-layout { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
+        @media(min-width: 850px) { .content-layout { flex-direction: row; } .main-area { flex: 1.8; border-right: 1px solid #cbd5e1; } .sidebar-area { flex: 1; background-color: #f8fafc; } }
+        .main-area { display: flex; flex-direction: column; min-height: 0; }
+        .screen { display: none; padding: 24px 28px; flex-grow: 1; flex-direction: column; min-height: 0; }
+        .screen.active { display: flex; animation: fadeIn 0.4s ease; }
+        .sidebar-area { display: none; padding: 22px 20px; flex-direction: column; min-height: 0; overflow: auto; }
+        .sidebar-title { font-size: 18px; margin-bottom: 25px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        #start-screen { text-align: center; justify-content: center; align-items: center; }
+        #start-screen h2 { font-size: 32px; margin-bottom: 14px; }
+        #start-screen p { font-size: 17px; margin-bottom: 22px; max-width: 760px; line-height: 1.5; color: #475569; }
+        .category-badge { display: inline-block; background-color: #e0e7ff; color: #3730a3; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+        .question-text { font-size: 20px; font-weight: 600; margin-bottom: 18px; line-height: 1.35; }
+        .options-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .option-btn { background-color: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; font-size: 15px; font-family: 'Lato', sans-serif; color: #334155; text-align: left; cursor: pointer; transition: all 0.2s; display: flex; align-items: flex-start; line-height: 1.3; min-height: 72px; }
+        .option-btn:hover { border-color: #cbd5e1; background-color: #f1f5f9; transform: translateY(-1px); }
+        .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; }
+        .option-btn.wrong { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        .option-btn:disabled { cursor: default; transform: none; }
+        .feedback-box { display: none; padding: 16px; border-radius: 12px; margin-bottom: 14px; }
+        .feedback-box.show { display: block; }
+        .feedback-box.success { background-color: #dcfce7; border-left: 5px solid #22c55e; color: #166534; }
+        .feedback-box.error { background-color: #fee2e2; border-left: 5px solid #ef4444; color: #991b1b; }
+        .feedback-title { font-weight: bold; margin-bottom: 6px; font-size: 17px; }
+        .btn { background-color: #2563eb; color: white; border: none; border-radius: 8px; padding: 12px 22px; font-size: 15px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; font-family: 'Poppins', sans-serif; align-self: flex-end; margin-top: auto; }
+        .btn:hover { background-color: #1d4ed8; }
+        .btn-large { padding: 16px 34px; font-size: 18px; align-self: center; }
+        .mastery-container { width: 100%; }
+        .mastery-item { margin-bottom: 16px; }
+        .mastery-label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-weight: bold; font-size: 13px; }
+        .mastery-bar-bg { background-color: #e2e8f0; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; }
+        .mastery-bar-fill { height: 100%; border-radius: 10px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.6s; }
+        @media(max-width: 980px) { .options-grid { grid-template-columns: 1fr; } }
+        @media(max-width: 849px) { body { padding: 0; } .app-container { height: 100vh; border-radius: 0; } .screen { padding: 20px; } .header { padding: 12px 16px; } .header h1 { font-size: 18px; } .stats-bar { font-size: 12px; gap: 10px; } .question-text { font-size: 18px; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <h1><i class="fa-solid fa-graduation-cap"></i> CE Economie 2025 – Opgave 3</h1>
+        <div class="stats-bar" id="game-stats" style="display: none;">
+            <div><i class="fa-solid fa-star"></i> Score: <span id="score-display">0</span></div>
+            <div><i class="fa-solid fa-list-ol"></i> Vraag: <span id="question-count">0/10</span></div>
+        </div>
+    </div>
+    <div class="content-layout">
+        <div class="main-area">
+            <div id="start-screen" class="screen active">
+                <h2>IJssalon</h2>
+                <p>Test je kennis van monopolie, winstberekening, MO=MK, gevangenendilemma en zelfbinding.</p>
+                <div style="text-align: left; background: #f8fafc; padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #e2e8f0;">
+                    <h3 style="margin-bottom: 15px; font-size: 18px;"><i class="fa-solid fa-bullseye" style="color:#2563eb;"></i> Wat we gaan toetsen:</h3>
+                    <ul style="list-style-position: inside; color: #475569; line-height: 1.8;"><li>Monopolie</li>
+<li>Berekeningen</li>
+<li>Speltheorie</li>
+<li>Strategie</li></ul>
+                </div>
+                <button class="btn btn-large" onclick="startGame()">Start de Training</button>
+            </div>
+            <div id="game-screen" class="screen">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="category-display" class="category-badge">Categorie</div>
+                    <div id="difficulty-stars" style="color: #fbbf24; margin-bottom: 20px; font-size: 18px;"></div>
+                </div>
+                <div id="question-text" class="question-text">Vraag...</div>
+                <div id="options-container" class="options-grid"></div>
+                <div id="feedback-container" class="feedback-box">
+                    <div id="feedback-title" class="feedback-title">Feedback</div>
+                    <div id="feedback-text">Uitleg...</div>
+                </div>
+                <button id="next-btn" class="btn" style="display: none;" onclick="nextQuestion()">Volgende Vraag <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            <div id="end-screen" class="screen">
+                <h2>Sessie Voltooid! <i class="fa-solid fa-trophy" style="color: #fbbf24;"></i></h2>
+                <p style="font-size: 18px; margin-top: 10px; margin-bottom: 30px;">In deze sessie heb je <span id="final-score" style="font-weight: bold; color: #2563eb;"></span> vragen goed beantwoord.</p>
+                <button class="btn btn-large" onclick="restartSession()">Start Volgende Sessie <i class="fa-solid fa-rotate-right"></i></button>
+            </div>
+        </div>
+        <div class="sidebar-area" id="sidebar">
+            <h3 class="sidebar-title"><i class="fa-solid fa-chart-pie"></i> Jouw Voortgang</h3>
+            <div id="mastery-dashboard" class="mastery-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    const questionBank = [{"category":"monopolie","difficulty":1,"q":"Een monopolist is:","options":["Eén van vele aanbieders","De enige aanbieder op de markt","Een prijsnemer","Altijd een overheidsbedrijf"],"answer":1,"rationale":"Monopolie = één aanbieder, geen substituten."},{"category":"monopolie","difficulty":1,"q":"Bij een monopolist is de vraaglijn van het bedrijf:","options":["Horizontaal","Gelijk aan de marktvraag","Verticaal","Onbekend"],"answer":1,"rationale":"De monopolist IS de markt, dus de bedrijfsvraag = de marktvraag."},{"category":"monopolie","difficulty":2,"q":"Waarom is MO < P bij een monopolist?","options":["Omdat de monopolist moet liegen","Omdat de monopolist de prijs moet verlagen om meer te verkopen","Omdat de kosten stijgen","Omdat de overheid ingrijpt"],"answer":1,"rationale":"Om meer te verkopen moet de monopolist de prijs verlagen voor ALLE eenheden, waardoor MO sneller daalt dan P."},{"category":"monopolie","difficulty":2,"q":"Een monopolist maximaliseert zijn winst bij:","options":["P = MK","MO = MK","GO = GTK","TO = TK"],"answer":1,"rationale":"Winstmaximalisatie bij MO = MK, niet bij P = MK (dat is volkomen concurrentie)."},{"category":"monopolie","difficulty":3,"q":"Bij een monopolist geldt P = €3 en GTK = €2. De winst per stuk is:","options":["€1","€5","€2","€3"],"answer":0,"rationale":"Winst per stuk = GO – GTK = P – GTK = 3 – 2 = €1."},{"category":"berekeningen","difficulty":1,"q":"TK = 0,005Q² + 1,2Q + 30. De vaste kosten zijn:","options":["€30.000","€1.200","€0,005","€31.200"],"answer":0,"rationale":"De vaste kosten zijn het constante deel van TK: 30 (duizend) = €30.000."},{"category":"berekeningen","difficulty":1,"q":"Qv = –50P + 210. Bij P = €3 is Q:","options":["60","45","90","30"],"answer":0,"rationale":"Q = –50(3) + 210 = –150 + 210 = 60 (duizend)."},{"category":"berekeningen","difficulty":2,"q":"TO = –0,02Q² + 4,2Q. De MO-functie is:","options":["–0,04Q + 4,2","–0,02Q + 4,2","0,04Q + 4,2","–0,04Q"],"answer":0,"rationale":"MO = afgeleide van TO: afgeleide van –0,02Q² = –0,04Q, afgeleide van 4,2Q = 4,2."},{"category":"berekeningen","difficulty":2,"q":"MO = –0,04Q + 4,2 en MK = 0,01Q + 1,45. Bij MO = MK geldt Q =","options":["55","60","50","45"],"answer":0,"rationale":"–0,04Q + 4,2 = 0,01Q + 1,45 → 2,75 = 0,05Q → Q = 55."},{"category":"berekeningen","difficulty":3,"q":"De prijs stijgt van €3,00 naar €3,10 door een kostenstijging van €0,25. Het doorberekeningspercentage is:","options":["40%","44%","25%","10%"],"answer":0,"rationale":"(3,10 – 3,00) / 0,25 × 100% = 0,10 / 0,25 × 100% = 40%."},{"category":"berekeningen","difficulty":3,"q":"Waarom berekent een monopolist niet 100% van de kostenstijging door?","options":["Omdat de overheid dat verbiedt","Omdat de vraag daalt bij hogere prijs","Omdat de monopolist geen kosten heeft","Omdat MO gelijk blijft"],"answer":1,"rationale":"Bij een dalende vraaglijn leidt een hogere prijs tot minder afzet. De optimale doorberekening is minder dan 100%."},{"category":"speltheorie","difficulty":1,"q":"Bij een gevangenendilemma hebben beide spelers een:","options":["Optimale strategie","Dominante strategie die tot suboptimaal resultaat leidt","Samenwerkingsstrategie","Geen keuze"],"answer":1,"rationale":"Het dilemma: de dominante strategie (eigenbelang) leidt voor BEIDE tot een slechter resultaat dan samenwerking."},{"category":"speltheorie","difficulty":1,"q":"Perfecte substituten betekent dat consumenten:","options":["Loyaal zijn aan één merk","Alleen op prijs kiezen","Altijd het duurdere kiezen","Niet kiezen"],"answer":1,"rationale":"Perfecte substituten = identieke producten, dus alleen de prijs telt."},{"category":"speltheorie","difficulty":2,"q":"Waarom ontstaat er een gevangenendilemma bij perfecte substituten?","options":["Omdat consumenten op kwaliteit letten","Omdat beide aanbieders de prijs willen verlagen om alle vraag te krijgen","Omdat de overheid ingrijpt","Omdat er maar één aanbieder is"],"answer":1,"rationale":"Bij perfecte substituten gaat alle vraag naar de goedkoopste. Beide willen net goedkoper zijn → prijzenoorlog."},{"category":"speltheorie","difficulty":3,"q":"Het gevangenendilemma leidt tot een Nash-evenwicht dat:","options":["Pareto-optimaal is","Niet Pareto-optimaal is","De hoogste winst oplevert","Onmogelijk is"],"answer":1,"rationale":"Het Nash-evenwicht bij het gevangenendilemma is NIET Pareto-optimaal: beide zouden beter af zijn bij samenwerking."},{"category":"strategie","difficulty":1,"q":"Zelfbinding betekent:","options":["Je concurrent dwingen iets te doen","Jezelf vastleggen aan een strategie","De overheid om hulp vragen","Samenwerken met je concurrent"],"answer":1,"rationale":"Zelfbinding = jezelf geloofwaardig vastleggen aan een strategie, zodat de concurrent zijn gedrag aanpast."},{"category":"strategie","difficulty":2,"q":"Guarda’s laagsteprijsgarantie werkt omdat:","options":["Orso Bianco verplicht is mee te doen","Orso Bianco weet dat prijsverlaging niet loont","De overheid het afdwingt","Consumenten het niet geloven"],"answer":1,"rationale":"Orso Bianco weet dat Guarda automatisch zal volgen (en nog goedkoper wordt), dus prijsverlaging loont niet."},{"category":"strategie","difficulty":3,"q":"Wat maakt de zelfbinding van Guarda geloofwaardig?","options":["De lage prijs","De openbare advertentie op sociale media","De monopoliepositie","De kwaliteit van het ijs"],"answer":1,"rationale":"De advertentie is openbaar en bindend — Guarda kan er niet meer onderuit. Dat maakt het geloofwaardig."}];
+    let userProgress = {"monopolie":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false},"berekeningen":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false},"speltheorie":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false},"strategie":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false}};
+    const catNames = {"monopolie":"Monopolie","berekeningen":"Berekeningen","speltheorie":"Speltheorie","strategie":"Strategie"};
+    let currentQuestionIndex = 0, score = 0, currentQuestionData = null, askedQuestionsThisSession = [];
+    const maxQuestions = 10;
+
+    function renderMasteryDashboard() {
+        const dash = document.getElementById('mastery-dashboard'); dash.innerHTML = '';
+        for (const [cat, p] of Object.entries(userProgress)) {
+            let steps = p.closed ? 3 : Math.min(p.correctCount, 3);
+            let pct = Math.round((steps / 3) * 100);
+            let status = p.closed ? "Afgesloten <i class='fa-solid fa-check-circle'></i>" : 'Reeks: '+steps+'/3';
+            let barColor = pct === 100 ? '#10b981' : '#3b82f6';
+            let textColor = pct === 100 ? '#10b981' : '#64748b';
+            dash.innerHTML += '<div class="mastery-item"><div class="mastery-label"><span>'+catNames[cat]+'</span><span style="color:'+textColor+'">'+status+'</span></div><div class="mastery-bar-bg"><div class="mastery-bar-fill" style="width:'+pct+'%;background-color:'+barColor+'"></div></div></div>';
+        }
+    }
+    function startGame() {
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        document.getElementById('sidebar').style.display = 'flex';
+        document.getElementById('game-stats').style.display = 'flex';
+        renderMasteryDashboard(); nextQuestion();
+    }
+    function restartSession() {
+        if (Object.values(userProgress).every(p => p.closed)) {
+            alert("Geniaal! Alles afgesloten. Voortgang wordt gereset.");
+            for (let c in userProgress) userProgress[c] = {level:1,correctCount:0,passedLevel3:false,closed:false};
+        }
+        currentQuestionIndex = 0; score = 0; askedQuestionsThisSession = [];
+        document.getElementById('end-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        document.getElementById('score-display').innerText = "0";
+        document.getElementById('question-count').innerText = "0/10";
+        renderMasteryDashboard(); nextQuestion();
+    }
+    function getNextQuestion() {
+        let cats = Object.keys(userProgress).filter(c => !userProgress[c].closed);
+        if (!cats.length) return null;
+        cats.sort(() => Math.random() - 0.5);
+        for (let cat of cats) {
+            let p = userProgress[cat], diff = p.correctCount >= 2 ? 3 : p.level;
+            let pool = questionBank.filter(q => q.category === cat && q.difficulty === diff && !askedQuestionsThisSession.includes(q));
+            if (!pool.length) pool = questionBank.filter(q => q.category === cat && !askedQuestionsThisSession.includes(q));
+            if (pool.length) { const sel = pool[Math.floor(Math.random()*pool.length)]; askedQuestionsThisSession.push(sel); return sel; }
+        }
+        let fb = questionBank.filter(q => !askedQuestionsThisSession.includes(q));
+        if (fb.length) { const sel = fb[Math.floor(Math.random()*fb.length)]; askedQuestionsThisSession.push(sel); return sel; }
+        return null;
+    }
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex > maxQuestions) { endGame(); return; }
+        document.getElementById('question-count').innerText = currentQuestionIndex+'/'+maxQuestions;
+        document.getElementById('feedback-container').classList.remove('show','success','error');
+        document.getElementById('next-btn').style.display = 'none';
+        currentQuestionData = getNextQuestion();
+        if (!currentQuestionData) { endGame(); return; }
+        document.getElementById('category-display').innerText = catNames[currentQuestionData.category]+' - Niveau '+currentQuestionData.difficulty;
+        let stars = ''; for(let i=0;i<currentQuestionData.difficulty;i++) stars += '<i class="fa-solid fa-star"></i>';
+        document.getElementById('difficulty-stars').innerHTML = stars;
+        document.getElementById('question-text').innerHTML = currentQuestionData.q;
+        const oc = document.getElementById('options-container'); oc.innerHTML = '';
+        currentQuestionData.options.forEach((opt, idx) => {
+            const btn = document.createElement('button'); btn.className = 'option-btn';
+            btn.innerHTML = '<span>'+opt+'</span>'; btn.onclick = () => checkAnswer(idx, btn); oc.appendChild(btn);
+        });
+    }
+    function checkAnswer(idx, btn) {
+        document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+        const ok = idx === currentQuestionData.answer;
+        const fb = document.getElementById('feedback-container');
+        const cat = currentQuestionData.category, diff = currentQuestionData.difficulty;
+        if (ok) {
+            btn.classList.add('correct'); fb.className = 'feedback-box show success';
+            document.getElementById('feedback-title').innerHTML = '<i class="fa-solid fa-check-circle"></i> Correct!';
+            score++; document.getElementById('score-display').innerText = score;
+            userProgress[cat].correctCount++;
+            if (diff === 3) userProgress[cat].passedLevel3 = true;
+            if (userProgress[cat].correctCount >= 3 && userProgress[cat].passedLevel3) userProgress[cat].closed = true;
+            if (userProgress[cat].level < 3) userProgress[cat].level++;
+        } else {
+            btn.classList.add('wrong'); document.querySelectorAll('.option-btn')[currentQuestionData.answer].classList.add('correct');
+            fb.className = 'feedback-box show error';
+            document.getElementById('feedback-title').innerHTML = '<i class="fa-solid fa-times-circle"></i> Helaas onjuist.';
+            if (userProgress[cat].level > 1) userProgress[cat].level--;
+            userProgress[cat].correctCount = 0; userProgress[cat].passedLevel3 = false;
+        }
+        renderMasteryDashboard();
+        document.getElementById('feedback-text').innerHTML = currentQuestionData.rationale;
+        document.getElementById('next-btn').style.display = 'block';
+    }
+    function endGame() {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('end-screen').classList.add('active');
+        let played = Math.min(currentQuestionIndex - 1, maxQuestions);
+        document.getElementById('final-score').innerText = score+' van de '+played;
+        renderMasteryDashboard();
+    }
+    document.addEventListener('keydown', function(e) {
+        if (document.activeElement && (document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA')) return;
+        const nb = document.getElementById('next-btn');
+        if (nb && nb.style.display !== 'none' && (e.key==='Enter'||e.key===' ')) { e.preventDefault(); nextQuestion(); }
+    });
+</script>
+</body>
+</html>

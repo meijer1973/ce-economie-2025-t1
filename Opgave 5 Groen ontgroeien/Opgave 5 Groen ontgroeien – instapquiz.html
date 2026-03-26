@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groen ontgroeien - Instapquiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #e2e8f0; font-family: 'Lato', sans-serif; color: #334155; display: flex; justify-content: center; align-items: stretch; min-height: 100vh; padding: 10px; }
+        h1, h2, h3 { font-family: 'Poppins', sans-serif; color: #0f172a; }
+        .app-container { background-color: #ffffff; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 1360px; overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 20px); min-height: 0; }
+        .header { background-color: #2563eb; color: white; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; z-index: 10; flex-shrink: 0; }
+        .header h1 { color: white; font-size: 22px; margin: 0; }
+        .stats-bar { display: flex; gap: 16px; font-size: 14px; font-weight: bold; }
+        .content-layout { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
+        @media(min-width: 850px) { .content-layout { flex-direction: row; } .main-area { flex: 1.8; border-right: 1px solid #cbd5e1; } .sidebar-area { flex: 1; background-color: #f8fafc; } }
+        .main-area { display: flex; flex-direction: column; min-height: 0; }
+        .screen { display: none; padding: 24px 28px; flex-grow: 1; flex-direction: column; min-height: 0; }
+        .screen.active { display: flex; animation: fadeIn 0.4s ease; }
+        .sidebar-area { display: none; padding: 22px 20px; flex-direction: column; min-height: 0; overflow: auto; }
+        .sidebar-title { font-size: 18px; margin-bottom: 25px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        #start-screen { text-align: center; justify-content: center; align-items: center; }
+        #start-screen h2 { font-size: 32px; margin-bottom: 14px; }
+        #start-screen p { font-size: 17px; margin-bottom: 22px; max-width: 760px; line-height: 1.5; color: #475569; }
+        .category-badge { display: inline-block; background-color: #e0e7ff; color: #3730a3; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+        .question-text { font-size: 20px; font-weight: 600; margin-bottom: 18px; line-height: 1.35; }
+        .options-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .option-btn { background-color: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; font-size: 15px; font-family: 'Lato', sans-serif; color: #334155; text-align: left; cursor: pointer; transition: all 0.2s; display: flex; align-items: flex-start; line-height: 1.3; min-height: 72px; }
+        .option-btn:hover { border-color: #cbd5e1; background-color: #f1f5f9; transform: translateY(-1px); }
+        .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; }
+        .option-btn.wrong { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        .option-btn:disabled { cursor: default; transform: none; }
+        .feedback-box { display: none; padding: 16px; border-radius: 12px; margin-bottom: 14px; }
+        .feedback-box.show { display: block; }
+        .feedback-box.success { background-color: #dcfce7; border-left: 5px solid #22c55e; color: #166534; }
+        .feedback-box.error { background-color: #fee2e2; border-left: 5px solid #ef4444; color: #991b1b; }
+        .feedback-title { font-weight: bold; margin-bottom: 6px; font-size: 17px; }
+        .btn { background-color: #2563eb; color: white; border: none; border-radius: 8px; padding: 12px 22px; font-size: 15px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; font-family: 'Poppins', sans-serif; align-self: flex-end; margin-top: auto; }
+        .btn:hover { background-color: #1d4ed8; }
+        .btn-large { padding: 16px 34px; font-size: 18px; align-self: center; }
+        .mastery-container { width: 100%; }
+        .mastery-item { margin-bottom: 16px; }
+        .mastery-label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-weight: bold; font-size: 13px; }
+        .mastery-bar-bg { background-color: #e2e8f0; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; }
+        .mastery-bar-fill { height: 100%; border-radius: 10px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.6s; }
+        @media(max-width: 980px) { .options-grid { grid-template-columns: 1fr; } }
+        @media(max-width: 849px) { body { padding: 0; } .app-container { height: 100vh; border-radius: 0; } .screen { padding: 20px; } .header { padding: 12px 16px; } .header h1 { font-size: 18px; } .stats-bar { font-size: 12px; gap: 10px; } .question-text { font-size: 18px; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <h1><i class="fa-solid fa-graduation-cap"></i> CE Economie 2025 – Opgave 5</h1>
+        <div class="stats-bar" id="game-stats" style="display: none;">
+            <div><i class="fa-solid fa-star"></i> Score: <span id="score-display">0</span></div>
+            <div><i class="fa-solid fa-list-ol"></i> Vraag: <span id="question-count">0/10</span></div>
+        </div>
+    </div>
+    <div class="content-layout">
+        <div class="main-area">
+            <div id="start-screen" class="screen active">
+                <h2>Groen ontgroeien</h2>
+                <p>Test je kennis van het Keynesiaans kruis, IS-MB model, groen bbp en output gap.</p>
+                <div style="text-align: left; background: #f8fafc; padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #e2e8f0;">
+                    <h3 style="margin-bottom: 15px; font-size: 18px;"><i class="fa-solid fa-bullseye" style="color:#2563eb;"></i> Wat we gaan toetsen:</h3>
+                    <ul style="list-style-position: inside; color: #475569; line-height: 1.8;"><li>Keynesiaans kruis</li>
+<li>IS-MB model</li>
+<li>Groen bbp</li>
+<li>Beleid en output gap</li></ul>
+                </div>
+                <button class="btn btn-large" onclick="startGame()">Start de Training</button>
+            </div>
+            <div id="game-screen" class="screen">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="category-display" class="category-badge">Categorie</div>
+                    <div id="difficulty-stars" style="color: #fbbf24; margin-bottom: 20px; font-size: 18px;"></div>
+                </div>
+                <div id="question-text" class="question-text">Vraag...</div>
+                <div id="options-container" class="options-grid"></div>
+                <div id="feedback-container" class="feedback-box">
+                    <div id="feedback-title" class="feedback-title">Feedback</div>
+                    <div id="feedback-text">Uitleg...</div>
+                </div>
+                <button id="next-btn" class="btn" style="display: none;" onclick="nextQuestion()">Volgende Vraag <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            <div id="end-screen" class="screen">
+                <h2>Sessie Voltooid! <i class="fa-solid fa-trophy" style="color: #fbbf24;"></i></h2>
+                <p style="font-size: 18px; margin-top: 10px; margin-bottom: 30px;">In deze sessie heb je <span id="final-score" style="font-weight: bold; color: #2563eb;"></span> vragen goed beantwoord.</p>
+                <button class="btn btn-large" onclick="restartSession()">Start Volgende Sessie <i class="fa-solid fa-rotate-right"></i></button>
+            </div>
+        </div>
+        <div class="sidebar-area" id="sidebar">
+            <h3 class="sidebar-title"><i class="fa-solid fa-chart-pie"></i> Jouw Voortgang</h3>
+            <div id="mastery-dashboard" class="mastery-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    const questionBank = [{"category":"keynesiaans","difficulty":1,"q":"In het Keynesiaans kruis is het evenwicht waar:","options":["EV > Y","EV < Y","EV = Y","EV = 0"],"answer":2,"rationale":"Evenwicht = effectieve vraag is gelijk aan de productie (Y)."},{"category":"keynesiaans","difficulty":1,"q":"De marginale consumptiequote (c) geeft aan:","options":["Hoeveel er totaal geconsumeerd wordt","Welk deel van extra inkomen wordt besteed","Hoeveel de overheid uitgeeft","De verhouding C/Y"],"answer":1,"rationale":"c = de fractie van elk extra euro inkomen die wordt geconsumeerd."},{"category":"keynesiaans","difficulty":2,"q":"EV = 400 + 0,5Y. Het evenwichtsinkomen Y* is:","options":["400","800","600","200"],"answer":1,"rationale":"Y = 400 + 0,5Y → 0,5Y = 400 → Y* = 800."},{"category":"keynesiaans","difficulty":2,"q":"Als de autonome consumptie daalt van 400 naar 360, verschuift de EV-curve:","options":["Naar boven","Naar beneden","Wordt steiler","Wordt vlakker"],"answer":1,"rationale":"Lagere autonome consumptie = lagere EV bij elk inkomensniveau = curve naar beneden."},{"category":"keynesiaans","difficulty":3,"q":"Als c daalt van 0,5 naar 0,4, dan wordt de EV-curve:","options":["Steiler","Vlakker","Verschuift naar boven","Verschuift naar beneden"],"answer":1,"rationale":"c is de helling van de EV-curve. Lagere c = vlakker verloop."},{"category":"ismb","difficulty":1,"q":"De IS-curve toont combinaties van:","options":["Inflatie en productie","Reële rente en nationaal inkomen","Nominale rente en werkloosheid","Wisselkoers en export"],"answer":1,"rationale":"IS-curve = alle combinaties van r en Y waarbij de goederenmarkt in evenwicht is."},{"category":"ismb","difficulty":2,"q":"Een steilere IS-curve betekent dat:","options":["Monetair beleid effectiever is","Consumenten gevoeliger zijn voor rente","Consumenten minder gevoelig zijn voor rente","De multiplier groter is"],"answer":2,"rationale":"Steiler = een verandering in rente leidt tot een kleinere verandering in Y = minder rentegevoelig."},{"category":"ismb","difficulty":2,"q":"De MB-lijn is horizontaal omdat:","options":["De inflatie constant is","De CB een vaste rente kiest bij gegeven inflatie","De productie niet verandert","De wisselkoers vast is"],"answer":1,"rationale":"De MB-lijn geeft de rente weer die de CB kiest. Bij gegeven inflatie is die rente vast voor alle inkomensniveaus."},{"category":"ismb","difficulty":3,"q":"Na de gedragsverandering: bij r = 1% en IS₁ ontstaat evenwicht bij Y =","options":["800 = Y*","600","1000","400"],"answer":0,"rationale":"Aflezen uit figuur 2: IS₁ kruist de horizontale lijn op Y* = 800 bij r = 1%."},{"category":"groen","difficulty":1,"q":"Groen bbp = bbp +","options":["Export – import","Milieuverbetering – milieuschade","Overheidsuitgaven","Investeringen"],"answer":1,"rationale":"Groen bbp corrigeert het reguliere bbp voor milieueffecten."},{"category":"groen","difficulty":2,"q":"Het bbp stijgt met 1,8% maar het groen bbp daalt met 0,3%. Dit betekent:","options":["De economie krimpt","De milieuschade overtreft de economische groei","Er is een rekenfout","De inflatie is te hoog"],"answer":1,"rationale":"Het netto milieueffect is negatief en groter dan de bbp-stijging, waardoor het groen bbp daalt."},{"category":"groen","difficulty":3,"q":"Hogere overheidsbestedingen leiden tot een hoger bbp. Het groen bbp:","options":["Stijgt altijd","Daalt altijd","Kan zowel stijgen als dalen","Blijft gelijk"],"answer":2,"rationale":"Het hangt af van het netto milieueffect. Positief of neutraal → groen bbp stijgt. Negatief en groter dan bbp-stijging → daalt."},{"category":"beleid","difficulty":1,"q":"De output gap = Y – Y*. Een negatieve output gap betekent:","options":["De productie is hoger dan potentieel","De productie is lager dan potentieel","Er is geen werkloosheid","De inflatie stijgt"],"answer":1,"rationale":"Negatieve output gap = Y < Y* = onderbesteding."},{"category":"beleid","difficulty":2,"q":"De output gap verdwijnt als consumenten minder uren werken, omdat:","options":["Y stijgt naar Y*","Y* daalt naar Y","De rente stijgt","De inflatie daalt"],"answer":1,"rationale":"Minder werken → lagere productiecapaciteit → Y* daalt naar het niveau van Y."},{"category":"beleid","difficulty":3,"q":"Monetair beleid is minder effectief geworden door de gedragsverandering. Dit komt door:","options":["De lagere autonome consumptie","De steilere IS-curve","De hogere inflatie","De lagere overheidsbestedingen"],"answer":1,"rationale":"Steilere IS-curve = minder gevoelig voor rentewijzigingen = monetair beleid minder effectief."}];
+    let userProgress = {"keynesiaans":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false},"ismb":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false},"groen":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false},"beleid":{"level":1,"correctCount":0,"passedLevel3":false,"closed":false}};
+    const catNames = {"keynesiaans":"Keynesiaans kruis","ismb":"IS-MB model","groen":"Groen bbp","beleid":"Beleid en output gap"};
+    let currentQuestionIndex = 0, score = 0, currentQuestionData = null, askedQuestionsThisSession = [];
+    const maxQuestions = 10;
+
+    function renderMasteryDashboard() {
+        const dash = document.getElementById('mastery-dashboard'); dash.innerHTML = '';
+        for (const [cat, p] of Object.entries(userProgress)) {
+            let steps = p.closed ? 3 : Math.min(p.correctCount, 3);
+            let pct = Math.round((steps / 3) * 100);
+            let status = p.closed ? "Afgesloten <i class='fa-solid fa-check-circle'></i>" : 'Reeks: '+steps+'/3';
+            let barColor = pct === 100 ? '#10b981' : '#3b82f6';
+            let textColor = pct === 100 ? '#10b981' : '#64748b';
+            dash.innerHTML += '<div class="mastery-item"><div class="mastery-label"><span>'+catNames[cat]+'</span><span style="color:'+textColor+'">'+status+'</span></div><div class="mastery-bar-bg"><div class="mastery-bar-fill" style="width:'+pct+'%;background-color:'+barColor+'"></div></div></div>';
+        }
+    }
+    function startGame() {
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        document.getElementById('sidebar').style.display = 'flex';
+        document.getElementById('game-stats').style.display = 'flex';
+        renderMasteryDashboard(); nextQuestion();
+    }
+    function restartSession() {
+        if (Object.values(userProgress).every(p => p.closed)) {
+            alert("Geniaal! Alles afgesloten. Voortgang wordt gereset.");
+            for (let c in userProgress) userProgress[c] = {level:1,correctCount:0,passedLevel3:false,closed:false};
+        }
+        currentQuestionIndex = 0; score = 0; askedQuestionsThisSession = [];
+        document.getElementById('end-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        document.getElementById('score-display').innerText = "0";
+        document.getElementById('question-count').innerText = "0/10";
+        renderMasteryDashboard(); nextQuestion();
+    }
+    function getNextQuestion() {
+        let cats = Object.keys(userProgress).filter(c => !userProgress[c].closed);
+        if (!cats.length) return null;
+        cats.sort(() => Math.random() - 0.5);
+        for (let cat of cats) {
+            let p = userProgress[cat], diff = p.correctCount >= 2 ? 3 : p.level;
+            let pool = questionBank.filter(q => q.category === cat && q.difficulty === diff && !askedQuestionsThisSession.includes(q));
+            if (!pool.length) pool = questionBank.filter(q => q.category === cat && !askedQuestionsThisSession.includes(q));
+            if (pool.length) { const sel = pool[Math.floor(Math.random()*pool.length)]; askedQuestionsThisSession.push(sel); return sel; }
+        }
+        let fb = questionBank.filter(q => !askedQuestionsThisSession.includes(q));
+        if (fb.length) { const sel = fb[Math.floor(Math.random()*fb.length)]; askedQuestionsThisSession.push(sel); return sel; }
+        return null;
+    }
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex > maxQuestions) { endGame(); return; }
+        document.getElementById('question-count').innerText = currentQuestionIndex+'/'+maxQuestions;
+        document.getElementById('feedback-container').classList.remove('show','success','error');
+        document.getElementById('next-btn').style.display = 'none';
+        currentQuestionData = getNextQuestion();
+        if (!currentQuestionData) { endGame(); return; }
+        document.getElementById('category-display').innerText = catNames[currentQuestionData.category]+' - Niveau '+currentQuestionData.difficulty;
+        let stars = ''; for(let i=0;i<currentQuestionData.difficulty;i++) stars += '<i class="fa-solid fa-star"></i>';
+        document.getElementById('difficulty-stars').innerHTML = stars;
+        document.getElementById('question-text').innerHTML = currentQuestionData.q;
+        const oc = document.getElementById('options-container'); oc.innerHTML = '';
+        currentQuestionData.options.forEach((opt, idx) => {
+            const btn = document.createElement('button'); btn.className = 'option-btn';
+            btn.innerHTML = '<span>'+opt+'</span>'; btn.onclick = () => checkAnswer(idx, btn); oc.appendChild(btn);
+        });
+    }
+    function checkAnswer(idx, btn) {
+        document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+        const ok = idx === currentQuestionData.answer;
+        const fb = document.getElementById('feedback-container');
+        const cat = currentQuestionData.category, diff = currentQuestionData.difficulty;
+        if (ok) {
+            btn.classList.add('correct'); fb.className = 'feedback-box show success';
+            document.getElementById('feedback-title').innerHTML = '<i class="fa-solid fa-check-circle"></i> Correct!';
+            score++; document.getElementById('score-display').innerText = score;
+            userProgress[cat].correctCount++;
+            if (diff === 3) userProgress[cat].passedLevel3 = true;
+            if (userProgress[cat].correctCount >= 3 && userProgress[cat].passedLevel3) userProgress[cat].closed = true;
+            if (userProgress[cat].level < 3) userProgress[cat].level++;
+        } else {
+            btn.classList.add('wrong'); document.querySelectorAll('.option-btn')[currentQuestionData.answer].classList.add('correct');
+            fb.className = 'feedback-box show error';
+            document.getElementById('feedback-title').innerHTML = '<i class="fa-solid fa-times-circle"></i> Helaas onjuist.';
+            if (userProgress[cat].level > 1) userProgress[cat].level--;
+            userProgress[cat].correctCount = 0; userProgress[cat].passedLevel3 = false;
+        }
+        renderMasteryDashboard();
+        document.getElementById('feedback-text').innerHTML = currentQuestionData.rationale;
+        document.getElementById('next-btn').style.display = 'block';
+    }
+    function endGame() {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('end-screen').classList.add('active');
+        let played = Math.min(currentQuestionIndex - 1, maxQuestions);
+        document.getElementById('final-score').innerText = score+' van de '+played;
+        renderMasteryDashboard();
+    }
+    document.addEventListener('keydown', function(e) {
+        if (document.activeElement && (document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA')) return;
+        const nb = document.getElementById('next-btn');
+        if (nb && nb.style.display !== 'none' && (e.key==='Enter'||e.key===' ')) { e.preventDefault(); nextQuestion(); }
+    });
+</script>
+</body>
+</html>
